@@ -1,0 +1,1 @@
+import{a1 as u,u as n,a2 as o}from"./CKrmhtJt.js";import{u as i}from"./CTv0N32m.js";import"./DvDH6DOc.js";const p=u(e=>{const t=i().value,a=n("page_intended");if(a.value=e.path!=="/login"?e.path:a.value,!t.isLoggedIn)return o("/login")});export{p as default};

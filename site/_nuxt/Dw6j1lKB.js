@@ -1,0 +1,1 @@
+import{t as c,c as o,e as s,q as t,s as _,i as a}from"./CKrmhtJt.js";const d={},n=e=>(t("data-v-fd684797"),e=e(),_(),e),r={class:"content-loader"},p=n(()=>a("div",{class:"circle-loader"},null,-1)),i=[p];function l(e,f){return o(),s("div",r,i)}const m=c(d,[["render",l],["__scopeId","data-v-fd684797"]]);export{m as _};

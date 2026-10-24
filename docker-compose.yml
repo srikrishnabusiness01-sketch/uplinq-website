@@ -1,0 +1,10 @@
+services:
+  wearecheck-website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wearecheck-website:latest
+    container_name: wearecheck_website
+    restart: unless-stopped
+    ports:
+      - "3000:80"

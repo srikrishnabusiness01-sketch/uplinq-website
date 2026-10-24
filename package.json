@@ -1,0 +1,20 @@
+{
+  "name": "wearecheck-clone",
+  "version": "1.0.0",
+  "description": "Pixel-perfect, animation-complete clone of wearecheck.co",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js",
+    "verify": "node tools/verify_all.js"
+  },
+  "keywords": [
+    "gsap",
+    "nuxt",
+    "motion-design",
+    "wearecheck"
+  ],
+  "author": "",
+  "license": "ISC"
+}

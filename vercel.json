@@ -1,0 +1,71 @@
+{
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "routes": [
+    {
+      "src": "/_nuxt/(.*)",
+      "dest": "/site/_nuxt/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/site/assets/$1"
+    },
+    {
+      "src": "/cdn-cgi/(.*)",
+      "dest": "/site/cdn-cgi/$1"
+    },
+    {
+      "src": "/favicon.png",
+      "dest": "/site/favicon.png"
+    },
+    {
+      "src": "/webclip.png",
+      "dest": "/site/webclip.png"
+    },
+    {
+      "src": "/work/quidax",
+      "dest": "/site/work/quidax/index.html"
+    },
+    {
+      "src": "/work/kele",
+      "dest": "/site/work/kele/index.html"
+    },
+    {
+      "src": "/work/autograph",
+      "dest": "/site/work/autograph/index.html"
+    },
+    {
+      "src": "/work/propel",
+      "dest": "/site/work/propel/index.html"
+    },
+    {
+      "src": "/case/nlng",
+      "dest": "/site/case/nlng/index.html"
+    },
+    {
+      "src": "/work",
+      "dest": "/site/work/index.html"
+    },
+    {
+      "src": "/about",
+      "dest": "/site/about/index.html"
+    },
+    {
+      "src": "/services",
+      "dest": "/site/services/index.html"
+    },
+    {
+      "src": "/careers",
+      "dest": "/site/careers/index.html"
+    },
+    {
+      "src": "/",
+      "dest": "/site/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/site/$1"
+    }
+  ]
+}
