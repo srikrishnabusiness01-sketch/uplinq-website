@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const PORT = 9222;
+const PORT = 9232;
+const ARTIFACT_DIR = "C:\\Users\\Asus\\.gemini\\antigravity\\brain\\1a96c3e4-4d36-437b-9a4e-5e24e4977eeb";
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function getJson(url) {
@@ -12,7 +13,9 @@ function getJson(url) {
     http.get(url, (res) => {
       let data = '';
       res.on('data', d => data += d);
-      res.on('end', () => resolve(JSON.parse(data)));
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+      });
     }).on('error', reject);
   });
 }
@@ -22,18 +25,27 @@ async function main() {
     `--remote-debugging-port=${PORT}`,
     '--headless=new',
     '--disable-gpu',
+    '--no-first-run',
+    '--no-default-browser-check',
     '--window-size=1440,900',
     'about:blank'
   ]);
 
-  await sleep(1500);
-  const targets = await getJson(`http://127.0.0.1:${PORT}/json`);
-  const pageTarget = targets.find(t => t.type === 'page' && !t.url.startsWith('chrome-extension')) || targets[0];
+  let connected = false;
+  let targets = null;
+  for (let i = 0; i < 30; i++) {
+    await sleep(300);
+    try {
+      targets = await getJson(`http://127.0.0.1:${PORT}/json`);
+      if (targets && targets.length > 0) { connected = true; break; }
+    } catch (e) {}
+  }
 
+  const pageTarget = targets.find(t => t.type === 'page') || targets[0];
   const ws = new WebSocket(pageTarget.webSocketDebuggerUrl);
-
   let id = 1;
   const pending = new Map();
+
   function send(method, params = {}) {
     return new Promise((resolve, reject) => {
       const msgId = id++;
@@ -56,24 +68,16 @@ async function main() {
   await send('Page.enable');
   await send('Runtime.enable');
 
-  const pagesToTest = [
-    { url: 'http://localhost:3000/work', name: 'frame_page_work.png' },
-    { url: 'http://localhost:3000/case/nlng', name: 'frame_page_nlng.png' },
-    { url: 'http://localhost:3000/work/quidax', name: 'frame_page_quidax.png' }
-  ];
+  await send('Page.navigate', { url: 'http://localhost:3000/' });
+  console.log('Waiting 8s for loader exit on desktop...');
+  await sleep(8000);
 
-  for (const p of pagesToTest) {
-    console.log(`Navigating to ${p.url}...`);
-    await send('Page.navigate', { url: p.url });
-    await sleep(4000);
-    const shot = await send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync(path.join(__dirname, p.name), Buffer.from(shot.data, 'base64'));
-    console.log(`Saved ${p.name}`);
-  }
+  const shot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(path.join(ARTIFACT_DIR, 'verify_desktop.png'), Buffer.from(shot.data, 'base64'));
+  console.log('Saved verify_desktop.png');
 
   ws.close();
   chrome.kill();
-  console.log('All page frame tests done!');
 }
 
 main().catch(console.error);

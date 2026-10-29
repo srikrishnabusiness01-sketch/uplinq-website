@@ -1,10 +1,8 @@
 const { spawn } = require('child_process');
 const http = require('http');
-const fs = require('fs');
-const path = require('path');
 
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const PORT = 9222;
+const PORT = 9227;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function getJson(url) {
@@ -12,7 +10,9 @@ function getJson(url) {
     http.get(url, (res) => {
       let data = '';
       res.on('data', d => data += d);
-      res.on('end', () => resolve(JSON.parse(data)));
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+      });
     }).on('error', reject);
   });
 }
@@ -22,19 +22,27 @@ async function main() {
     `--remote-debugging-port=${PORT}`,
     '--headless=new',
     '--disable-gpu',
-    '--window-size=1440,900',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--window-size=375,812',
     'about:blank'
   ]);
 
-  await sleep(1500);
-  const targets = await getJson(`http://127.0.0.1:${PORT}/json`);
-  const pageTarget = targets.find(t => t.type === 'page' && !t.url.startsWith('chrome-extension')) || targets[0];
-  console.log('Using target URL:', pageTarget.url);
+  let connected = false;
+  let targets = null;
+  for (let i = 0; i < 30; i++) {
+    await sleep(300);
+    try {
+      targets = await getJson(`http://127.0.0.1:${PORT}/json`);
+      if (targets && targets.length > 0) { connected = true; break; }
+    } catch (e) {}
+  }
 
+  const pageTarget = targets.find(t => t.type === 'page') || targets[0];
   const ws = new WebSocket(pageTarget.webSocketDebuggerUrl);
-
   let id = 1;
   const pending = new Map();
+
   function send(method, params = {}) {
     return new Promise((resolve, reject) => {
       const msgId = id++;
@@ -56,31 +64,31 @@ async function main() {
   await new Promise(r => ws.onopen = r);
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Emulation.setDeviceMetricsOverride', {
+    width: 375,
+    height: 812,
+    deviceScaleFactor: 2,
+    mobile: true
+  });
+
   await send('Page.navigate', { url: 'http://localhost:3000/' });
+  console.log('Waiting 5s...');
+  await sleep(5000);
 
-  console.log('Waiting 6 seconds for snappy loader and hero transition...');
-  await sleep(6000);
-
-  const res = await send('Runtime.evaluate', {
+  const evalRes = await send('Runtime.evaluate', {
     expression: `(() => {
-      const loader = document.querySelector('.c-loader');
-      return JSON.stringify({
-        loaderExists: !!loader,
-        loaderOpacity: loader ? getComputedStyle(loader).opacity : null,
-        loaderDisplay: loader ? getComputedStyle(loader).display : null,
-        loaderVisibility: loader ? getComputedStyle(loader).visibility : null,
-        h1Text: document.querySelector('h1') ? document.querySelector('h1').innerText : null,
-        scrollY: window.scrollY
-      });
+      const h1s = Array.from(document.querySelectorAll('.heading-h1, .header-tag')).map(el => ({
+        tag: el.tagName,
+        outerHTML: el.outerHTML,
+        computedOpacity: window.getComputedStyle(el).opacity,
+        inlineStyle: el.getAttribute('style')
+      }));
+      return JSON.stringify(h1s, null, 2);
     })()`,
     returnByValue: true
   });
 
-  console.log('Result at 14s:', res.result.value);
-
-  const shot = await send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync(path.join(__dirname, 'frame_top_hero_14s.png'), Buffer.from(shot.data, 'base64'));
-  console.log('Saved frame_top_hero_14s.png');
+  console.log('H1 elements:', evalRes.result.value);
 
   ws.close();
   chrome.kill();

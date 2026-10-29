@@ -14,9 +14,16 @@ node_modules/
 
 # Diagnostic captures
 tools/*.png
+tools/*.jpg
+/hero_after_load.png
+/test_chrome.png
+backup_original_images/
+backup_original_js/
 tools/create_and_push.js
 tools/check_gh_token.js
 tools/sanitize_keys.js
+tools/test_github_api.py
+tools/create_github_repo.py
 *.tmp
 
 # Editor & workspace directories
